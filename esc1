@@ -1,0 +1,55 @@
+1
+esc.cpp:
+#include "esc.h"
+
+esc::esc(QWidget *parent) : QWidget(parent)
+{
+
+    b1.setParent(this);
+    b1.setText("退出游戏");
+    b1.move(130,30);
+    connect(&b1, &QPushButton::released, this, &esc::allclose);
+    b2.setParent(this);
+    b2.setText("再来一局");
+    b2.move(20,30);
+    connect(&b2, &QPushButton::released, this, &esc::again);
+
+}
+void esc::allclose()
+{
+    this->close();
+    emit closeall();
+}
+void esc::again()
+{
+    this->close();
+    emit Again();
+}
+
+
+2
+esc.h:
+#ifndef ESC_H
+#define ESC_H
+
+#include <QWidget>
+#include <QPushButton>
+class esc : public QWidget
+{
+    Q_OBJECT
+public:
+    explicit esc(QWidget *parent = nullptr);
+    void allclose();
+    void again();
+signals:
+    void closeall();
+    void Again();
+
+public slots:
+
+private: QPushButton b1;
+         QPushButton b2;
+};
+
+#endif // ESC_H
+
