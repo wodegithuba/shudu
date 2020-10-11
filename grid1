@@ -1,0 +1,787 @@
+#include "grid.h"
+#include "esc.h"
+#include <QPainter>
+#include <QPen>
+#include <QDebug>
+#include <vector>
+#include <QTime>
+#include <iostream>
+#include <QMouseEvent>
+#include <QBrush>
+#include <QMenu>
+#include <QMenuBar>
+#include <QAction>
+#include <QApplication>
+#include <QPushButton>
+#include <QMenuBar>
+#include <QMenu>
+#include <QAction>
+#include <QTimer>
+
+int gridy;
+int gridx;
+int level=0;
+int logol=0;
+int lastlogol=0;
+int searchnum=0;
+int lastnum=0;
+int lasti=0;
+int lastj=0;
+int open=0;
+int sec=0;
+
+void grid::change_num(int n1,int n2)
+{
+    for(int i=0;i<9;i++)
+    {
+        for(int j=0;j<9;j++)
+        {
+            if(array[i][j]==n1)
+            {
+                array[i][j]=n2;
+                continue;
+            }
+            if(array[i][j]==n2)
+            {
+                array[i][j]=n1;
+            }
+        }
+    }
+}
+
+
+void grid::change_row(int n1, int n2)
+{
+    swap(array[n1],array[n2]);
+}
+
+
+void grid::change_column(int n1, int n2)
+{
+    for(int i=0;i<9;i++)
+    {
+        swap(array[i][n1],array[i][n2]);
+    }
+}
+
+
+void grid::change_threerow(int n1, int n2)
+{
+    for(int i=0;i<3;i++)
+    {
+        swap(array[n1*3+i],array[n2*3+i]);
+    }
+}
+
+void grid::change_threecolumn(int n1, int n2)
+{
+    for(int j=0;j<9;j++)
+    for(int i=0;i<3;i++)
+    {
+        swap(array[j][n1*3+i],array[j][n2*3+i]);
+    }
+}
+
+void grid::makeblank(int level)
+{
+    int num=0;
+    switch(level)
+    {
+        case 0 : num=61;break;
+        case 1 : num=46;break;
+        case 2 : num=31;break;
+        default : break;
+    }
+    QTime time= QTime::currentTime();
+    qsrand(time.msec()+time.second()*1000);
+    int n,m,count=0;
+    for(count=0;count<num;count++)
+    {
+        m=qrand()%9;
+        n=qrand()%9;
+        if(blank[n][m]==0)
+        {
+            blank[n][m]=1;
+        }
+        else
+        {
+            count--;
+        }
+    }
+    for(int i=0;i<9;i++)
+    {
+        for(int j=0;j<9;j++)
+        {
+            if(blank[i][j]==1)
+            {
+                issus[i][j]=int(array[i][j]);
+            }
+        }
+    }
+    qDebug()<<count<<num;
+}
+
+
+void grid::createshudu1()
+{
+    array={{1,2,3,4,5,6,7,8,9},
+           {4,5,6,7,8,9,1,2,3},
+           {7,8,9,1,2,3,4,5,6},
+           {2,3,4,5,6,7,8,9,1},
+           {5,6,7,8,9,1,2,3,4},
+           {8,9,1,2,3,4,5,6,7},
+           {3,4,5,6,7,8,9,1,2},
+           {6,7,8,9,1,2,3,4,5},
+           {9,1,2,3,4,5,6,7,8}};
+
+
+    int i=0;
+    QTime time= QTime::currentTime();
+    qsrand(time.msec()+time.second()*1000);
+    int n,m,l;
+    //交换数字
+    for(i=0;i<20;i++)
+    {
+        n=qrand()%9+1;
+        m=qrand()%9+1;
+        if(n!=m)
+        {
+            change_num(n,m);
+        }
+        else
+        {
+            i--;
+        }
+    }
+    //在三行之内交换行
+    for(i=0;i<20;i++)
+    {
+        n=qrand()%3;
+        m=qrand()%3;
+        l=qrand()%3;
+        if(n!=m)
+        {
+            change_row(3*l+n,3*l+m);
+        }
+        else
+        {
+            i--;
+        }
+    }
+    //三行之内交换列
+    for(i=0;i<20;i++)
+    {
+        n=qrand()%3;
+        m=qrand()%3;
+        l=qrand()%3;
+        if(n!=m)
+        {
+            change_column(3*l+n,3*l+m);
+        }
+        else
+        {
+            i--;
+        }
+    }
+    //三行三行交换
+    for(i=0;i<10;i++)
+    {
+        m=qrand()%3;
+        n=qrand()%3;
+        if(n!=m)
+        {
+            change_threerow(n,m);
+        }
+        else
+        {
+            i--;
+        }
+    }
+    //三列三列交换
+    for(i=0;i<10;i++)
+    {
+        m=qrand()%3;
+        n=qrand()%3;
+        if(n!=m)
+        {
+            change_threecolumn(n,m);
+        }
+        else
+        {
+            i--;
+        }
+    }
+    makeblank(level);
+    for(i=0;i<9;i++)
+    {
+        for(int j=0;j<9;j++)
+        {
+            cout<<array[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+    cout<<endl;
+    int aa=0;
+    for(i=0;i<9;i++)
+    {
+        for(int j=0;j<9;j++)
+        {
+            cout<<blank[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+    cout<<endl;
+    for(i=0;i<9;i++)
+    {
+        for(int j=0;j<9;j++)
+        {
+            if(issus[i][j]==0) aa++;
+            cout<<issus[i][j]<<" ";
+
+        }
+        cout<<endl;
+    }
+    qDebug()<<"aa"<<aa;
+}
+
+
+void grid::paintEvent(QPaintEvent *)
+{
+    QPainter p(this);
+    QPen pen;
+    pen.setWidth(1);
+    p.setPen(pen);
+    gridx=width()/13;
+    gridy=height()/11;
+    for(int i=0;i<10;i++)
+    {
+        p.drawLine(gridx,gridy+i*gridy,10*gridx,gridy+i*gridy);
+    }
+    for(int i=0;i<12;i++)
+    {
+        p.drawLine(gridx+i*gridx,gridy,gridx+i*gridx,10*gridy);
+    }
+    pen.setWidth(4);
+    p.setPen(pen);
+    for(int i=0;i<4;i++)
+    {
+        p.drawLine(gridx,gridy+3*i*gridy,10*gridx,gridy+3*i*gridy);
+        p.drawLine(11*gridx,gridy+i*gridy,12*gridx,gridy+i*gridy);
+    }
+    for(int i=0;i<4;i++)
+    {
+        p.drawLine(gridx+3*i*gridx,gridy,gridx+3*i*gridx,10*gridy);
+    }
+    for(int i=0;i<10;i++)
+    {
+        p.drawLine(11*gridx,gridy+i*gridy,12*gridx,gridy+i*gridy);
+    }
+    p.drawLine(11*gridx,gridy,11*gridx,10*gridy);
+    p.drawLine(12*gridx,gridy,12*gridx,10*gridy);
+    QString number=0;
+    QBrush brush;
+    brush.setColor(Qt::gray);
+    brush.setStyle(Qt::Dense2Pattern);
+    p.setBrush(brush);
+    pen.setWidth(2);
+    p.setPen(pen);
+    for(int i=0;i<9;i++)
+    {
+        for(int j=0;j<9;j++)
+        {
+            if(blank[i][j]==1)
+            {
+                p.drawRect((j+1)*gridx,(i+1)*gridy,gridx,gridy);
+            }
+        }
+    }
+    brush.setColor(Qt::blue);
+    brush.setStyle(Qt::Dense2Pattern);
+    p.setBrush(brush);
+    if(searchnum>0&&searchnum<10)
+    {
+        for(int i=0;i<9;i++)
+        {
+            for(int j=0;j<9;j++)
+            {
+                if(issus[i][j]==searchnum)
+                {
+                    p.drawRect((j+1)*gridx,(i+1)*gridy,gridx,gridy);
+                }
+            }
+        }
+    }
+    for(int i=0;i<9;i++)
+    {
+        for(int j=0;j<9;j++)
+        {
+            if(issus[i][j]!=0)
+            {
+                number=issus[i][j]+48;
+                p.setFont(QFont("systom", 12, 12));
+                p.drawText(QPoint((j+1)*gridx+5*gridx/12,(i+1)*gridy+3*gridy/4),number);
+            }
+        }
+    }
+    for(int i=1;i<=9;i++)
+    {
+        number=i+48;
+        p.setFont(QFont("systom", 12, 12));
+        p.drawText(QPoint(11*gridx+5*gridx/12,i*gridy+3*gridy/4),number);
+    }
+}
+
+
+void grid::mousePressEvent(QMouseEvent *ev)
+{
+    int ex=ev->x();
+    int ey=ev->y();
+    int eex=ex/gridx;
+    int eey=ey/gridy;
+    if(eex<1||eey<1)
+        return;
+    if(eex>11||eey>9||eex==10)
+        return;
+    int positionj=eex-1;
+    int positioni=eey-1;
+
+    //删除
+    if(ev->button()==Qt::RightButton&&blank[positioni][positionj]==0)
+    {
+        issus[positioni][positionj]=0;
+        logol=0;
+        searchnum=0;
+        update();
+        return;
+    }
+
+    if(eex==11)
+    {
+        logol=eey;
+        searchnum=eey;
+        qDebug()<<logol;
+    }
+
+    else
+    {
+        if(blank[positioni][positionj]==1||logol==0)
+            return;
+        if(ev->button()==Qt::RightButton)
+        {
+            issus[positioni][positionj]=0;
+            logol=0;
+            searchnum=0;
+        }
+        else
+        {
+            issus[positioni][positionj]=logol;
+        }
+    }
+    qDebug()<<positioni<<positionj<<issus[positioni][positionj];
+    update();
+}
+
+int grid::check()
+{
+    for(int i=0;i<9;i++)
+    {
+        for(int j=0;j<9;j++)
+        {
+            if(issus[i][j]<1||issus[i][j]>9)
+                return 0;
+        }
+    }
+    for(int i=0;i<9;i++)
+    {
+        for(int j=0;j<9;j++)
+        {
+            for(int k=0;k<j;k++)
+            {
+                if(issus[i][j]==issus[i][k])
+                {
+                    return 0;
+                }
+            }
+        }
+    }
+    for(int i=0;i<9;i++)
+    {
+        for(int j=0;j<9;j++)
+        {
+            for(int k=0;k<j;k++)
+            {
+                if(issus[j][i]==issus[k][i])
+                {
+                    return 0;
+                }
+            }
+        }
+    }
+    int a[9]={0,0,0,0,0,0,0,0,0};
+    for(int i=0,m=0;i<3;i++,m++)
+    {
+        for(int j=0;j<3;j++,m++)
+        {
+            a[m]=issus[i][j];
+            for(int k=0;k<m;k++)
+            {
+                if(a[k]==issus[i][j])
+                    return 0;
+            }
+        }
+    }qDebug()<<"/";
+    for(int i=0;i<9;i++)
+    {
+        a[i]=0;
+    }
+    for(int i=0,m=0;i<3;i++,m++)
+    {
+        for(int j=3;j<6;j++,m++)
+        {
+            a[m]=issus[i][j];
+            for(int k=0;k<m;k++)
+            {
+                if(a[k]==issus[i][j])
+                    return 0;
+            }
+        }
+    }
+    for(int i=0;i<9;i++)
+    {
+        a[i]=0;
+    }
+    for(int i=0,m=0;i<3;i++,m++)
+    {
+        for(int j=6;j<9;j++,m++)
+        {
+            a[m]=issus[i][j];
+            for(int k=0;k<m;k++)
+            {
+                if(a[k]==issus[i][j])
+                    return 0;
+            }
+        }
+    }
+    for(int i=0;i<9;i++)
+    {
+        a[i]=0;
+    }
+    for(int i=3,m=0;i<6;i++,m++)
+    {
+        for(int j=0;j<3;j++,m++)
+        {
+            a[m]=issus[i][j];
+            for(int k=0;k<m;k++)
+            {
+                if(a[k]==issus[i][j])
+                    return 0;
+            }
+        }
+    }
+    for(int i=0;i<9;i++)
+    {
+        a[i]=0;
+    }
+    for(int i=3,m=0;i<6;i++,m++)
+    {
+        for(int j=3;j<6;j++,m++)
+        {
+            a[m]=issus[i][j];
+            for(int k=0;k<m;k++)
+            {
+                if(a[k]==issus[i][j])
+                    return 0;
+            }
+        }
+    }
+
+    for(int i=0;i<9;i++)
+    {
+        a[i]=0;
+    }
+    for(int i=3,m=0;i<6;i++,m++)
+    {
+        for(int j=6;j<9;j++,m++)
+        {
+            a[m]=issus[i][j];
+            for(int k=0;k<m;k++)
+            {
+                if(a[k]==issus[i][j])
+                    return 0;
+            }
+        }
+    }
+
+    for(int i=0;i<9;i++)
+    {
+        a[i]=0;
+    }
+    for(int i=6,m=0;i<9;i++,m++)
+    {
+        for(int j=0;j<3;j++,m++)
+        {
+            a[m]=issus[i][j];
+            for(int k=0;k<m;k++)
+            {
+                if(a[k]==issus[i][j])
+                    return 0;
+            }
+        }
+    }
+
+    for(int i=0;i<9;i++)
+    {
+        a[i]=0;
+    }
+    for(int i=6,m=0;i<9;i++,m++)
+    {
+        for(int j=3;j<6;j++,m++)
+        {
+            a[m]=issus[i][j];
+            for(int k=0;k<m;k++)
+            {
+                if(a[k]==issus[i][j])
+                    return 0;
+            }
+        }
+    }
+
+    for(int i=0;i<9;i++)
+    {
+        a[i]=0;
+    }
+    for(int i=6,m=0;i<9;i++,m++)
+    {
+        for(int j=6;j<9;j++,m++)
+        {
+            a[m]=issus[i][j];
+            for(int k=0;k<m;k++)
+            {
+                if(a[k]==issus[i][j])
+                    return 0;
+            }
+        }
+    }
+    return 1;
+}
+void grid::checkfinish()
+{
+    int i;
+    i=check();
+    qDebug()<<i;
+    if(i==1)
+    {
+        w2.show();
+        w2.move(850,450);
+        w2.resize(250,100);
+
+    }
+    if(i==0)
+    {
+        w3.show();
+        w3.move(900,500);
+        w3.resize(200,100);
+
+    }
+}
+
+void grid::timerEvent(QTimerEvent *event)
+{
+    sec++;
+    update();
+}
+void grid::hintnum()
+{
+    if(count==0)
+    {
+        return;
+    }
+
+    QTime time= QTime::currentTime();
+    qsrand(time.msec()+time.second()*1000);
+    int i=0,j=0,k=0;
+    for(;k==0;)
+    {
+
+
+        i=qrand()%9;
+        j=qrand()%9;
+        if(issus[i][j]==0)
+        {
+            issus[i][j]=array[i][j];
+            blank[i][j]=1;
+            k=1;
+            count-=1;
+        }
+    }
+
+    update();
+}
+void grid::restartshudu()
+{
+    for(int i=0;i<9;i++)
+    {
+        for(int j=0;j<9;j++)
+        {
+            if(blank[i][j]==1)
+            {
+                issus[i][j]=array[i][j];
+            }
+            else
+            {
+                issus[i][j]=0;
+            }
+        }
+    }
+
+    update();
+}
+void grid::anothershudu()
+{
+    for(int i=0;i<9;i++)
+    {
+        for(int j=0;j<9;j++)
+        {
+            array[i][j]=0;
+            issus[i][j]=0;
+            blank[i][j]=0;
+        }
+    }
+    createshudu1();
+    sec=0;
+    update();
+}
+
+grid::grid(QWidget *parent) : QWidget(parent)
+{
+
+    b.setParent(this);
+    b.setText("完成");
+    b.resize(50,30);
+    b.move(500,20);
+    connect(&b, &QPushButton::released, this, &grid::checkfinish);
+    connect(&w2, &esc::closeall, this, &grid::close);
+    connect(&w2, &esc::Again, this, &grid::anothershudu);
+    QMenuBar *mBar = new QMenuBar(this);
+    QMenu *pFile1= mBar->addMenu("菜单");
+    QAction *pnew1=pFile1->addAction("重新开始");
+    connect(pnew1, &QAction::triggered,
+            [=]
+           {
+               restartshudu();
+           }
+            );
+
+    QAction *pnew2=pFile1->addAction("退出");
+    connect(pnew2, &QAction::triggered,
+            [=]
+           {
+                 this->close();
+           }
+            );
+    QMenu *pFile2= mBar->addMenu("难度");
+    QAction *pnew3=pFile2->addAction("level 1");
+    connect(pnew3, &QAction::triggered,
+            [=]
+           {
+                 level=0;
+                 count=20;
+                 anothershudu();
+           }
+            );
+    QAction *pnew4=pFile2->addAction("level 2");
+    connect(pnew4, &QAction::triggered,
+            [=]
+           {
+                 level=1;
+                 count=35;
+                 anothershudu();
+           }
+            );
+    QAction *pnew5=pFile2->addAction("level 3");
+    connect(pnew5, &QAction::triggered,
+            [=]
+           {
+                 level=2;
+                 count=40;
+                 anothershudu();
+           }
+            );
+    hint.setParent(this);
+        hint.setText("提示");
+        hint.resize(50,30);
+        hint.move(600,20);
+   connect(&hint,&QPushButton::clicked,this,&grid::hintnum);
+    createshudu1();
+}
+
+
+
+#ifndef GRID_H
+#define GRID_H
+#include <QWidget>
+#include <vector>
+#include <QPushButton>
+#include "esc.h"
+#include "wronganswer.h"
+using namespace std;
+
+using shudu=vector<vector<int>>;
+
+
+class grid : public QWidget
+{
+    Q_OBJECT
+public:
+    explicit grid(QWidget *parent = nullptr);
+    void receiveshudu(shudu);
+    void createshudu1();
+    void change_num(int,int);
+    void change_row(int,int);
+    void change_column(int,int);
+    void change_threerow(int,int);
+    void change_threecolumn(int,int);
+    void makeblank(int level);
+    void sendshudu();
+    int check();
+    void checkfinish();
+    void restartshudu();
+    void anothershudu();
+    void hintnum();
+
+
+signals:
+
+public slots:
+
+
+private:
+    int count=2500;
+    int startx;
+    int starty;
+    shudu array;
+    int blank[9][9]={{0,0,0,0,0,0,0,0,0}};
+    shudu issus={{0,0,0,0,0,0,0,0,0},
+                 {0,0,0,0,0,0,0,0,0},
+                 {0,0,0,0,0,0,0,0,0},
+                 {0,0,0,0,0,0,0,0,0},
+                 {0,0,0,0,0,0,0,0,0},
+                 {0,0,0,0,0,0,0,0,0},
+                 {0,0,0,0,0,0,0,0,0},
+                 {0,0,0,0,0,0,0,0,0},
+                 {0,0,0,0,0,0,0,0,0}};
+    QPushButton b;
+    esc w2;
+    wronganswer w3;
+    QPushButton hint;
+    QPushButton restart;
+    QPushButton another;
+    QLineEdit time;
+
+protected:
+    void paintEvent(QPaintEvent *);
+    void mousePressEvent(QMouseEvent *ev);
+    void timerEvent(QTimerEvent *event);
+};
+
+#endif // GRID_H
