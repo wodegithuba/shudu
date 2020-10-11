@@ -1,0 +1,39 @@
+1.cpp:
+#include "wronganswer.h"
+#include <QDebug>
+#include <QLineEdit>
+wronganswer::wronganswer(QWidget *parent): QWidget(parent)
+
+{
+
+    b4.setParent(this);
+    b4.setText(" 答案错误 ");
+    b4.move(50,0);
+    b3.setParent(this);
+    b3.setText("返回");
+    b3.move(50,50);
+    connect(&b3, &QPushButton::released, this, &wronganswer::close);
+}
+
+
+2.h:
+#ifndef WRONGANSWER_H
+#define WRONGANSWER_H
+
+#include <QWidget>
+#include <QPushButton>
+#include <QLineEdit>
+class wronganswer : public QWidget
+{
+    Q_OBJECT
+public:
+    explicit wronganswer(QWidget *parent = nullptr);
+    QPushButton b3;
+    QPushButton b4;
+    QLineEdit an;
+signals:
+
+public slots:
+};
+
+#endif // WRONGANSWER_H
